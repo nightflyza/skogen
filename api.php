@@ -1,11 +1,11 @@
 <?php
 
 $dataSource = __DIR__ . '/data/morkstates.json';
+$result=array();
+header('Content-Type: application/json');
 if (file_exists($dataSource)) { 
     $statesData = file_get_contents($dataSource);
     $morkStates = json_decode($statesData, true);
-    $result=array();
-    header('Content-Type: application/json');
     if (!empty($morkStates) and is_array($morkStates)) {
         foreach ($morkStates as $state) {
             $stateDistricts=array();
