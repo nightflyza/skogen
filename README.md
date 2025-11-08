@@ -7,6 +7,7 @@ Yes, it just PHP port of [and3rson/raid](https://github.com/and3rson/raid) origi
 ```
 git clone https://github.com/nightflyza/skogen.git
 cd skogen
+chmod -R 777 ./*
 php private/skogen.php
 ```
 
