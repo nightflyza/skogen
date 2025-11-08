@@ -30,7 +30,7 @@ if (empty($messages)) {
         $updater->parseMessage($message);
     }
 
-        print('[stats] Backlog loaded. Last message ID: ' . $parser->getLastMessageId() . PHP_EOL);
+        print('[stats] Backlog loaded. Messages: ' . sizeof($messages) . ' Last message ID: ' . $parser->getLastMessageId() . PHP_EOL);
 }
 
 
