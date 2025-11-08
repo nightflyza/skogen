@@ -1,11 +1,11 @@
 <?php
 
 $pollTimeout=5;
-$backlogSize=100;
+$backlogSize=200;
 $channel='air_alert_ua';
 $timezone='Europe/Kiev';
 $mapLabel='';
-$debug=true;
+$debug=false;
 $paranoidDebug=false;
 
 // this is the list of strings that will be used to detect the alert status

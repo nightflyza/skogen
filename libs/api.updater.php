@@ -442,16 +442,54 @@ class StatesUpdater {
     protected function matchLocations($line) {
         $lineKey = $this->normalizeKey($line);
         $matches = array();
+        if ($lineKey === '') {
+            return ($matches);
+        }
 
-        foreach ($this->locationIndex as $name => $entries) {
+        $keys = array_keys($this->locationIndex);
+        usort($keys, function ($a, $b) {
+            return (mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8'));
+        });
+
+        $occupied = array();
+
+        foreach ($keys as $name) {
             if ($name === '') {
                 continue;
             }
 
-            if (mb_strpos($lineKey, $name, 0, 'UTF-8') !== false) {
+            $pattern = '/(?<!\p{L})' . preg_quote($name, '/') . '(?!\p{L})/u';
+            if (!preg_match_all($pattern, $lineKey, $found, PREG_OFFSET_CAPTURE)) {
+                continue;
+            }
+
+            foreach ($found[0] as $match) {
+                $offset = $match[1];
+                $length = strlen($match[0]);
+
+                $overlaps = false;
+                foreach ($occupied as $span) {
+                    if ($offset < $span['end'] and ($offset + $length) > $span['start']) {
+                        $overlaps = true;
+                        break;
+                    }
+                }
+
+                if ($overlaps) {
+                    continue;
+                }
+
+                $entries = $this->locationIndex[$name];
                 foreach ($entries as $entry) {
                     $matches[] = $entry;
                 }
+
+                $occupied[] = array(
+                    'start' => $offset,
+                    'end' => $offset + $length,
+                );
+
+                break;
             }
         }
 

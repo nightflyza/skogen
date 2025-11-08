@@ -665,6 +665,12 @@ $defaultStates = array(
                 'changed' => '1970-01-01 03:00:00',
                 'reason' => '',
             ),
+            array(
+                'name' => 'Білгород-Дністровський район',
+                'alert' => false,
+                'changed' => '1970-01-01 03:00:00',
+                'reason' => '',
+            ),
         ),
         'community' => array(),
     ),
@@ -873,12 +879,6 @@ $defaultStates = array(
         'community' => array(
             array(
                 'name' => 'Липецька територіальна громада',
-                'alert' => false,
-                'changed' => '1970-01-01 03:00:00',
-                'reason' => '',
-            ),
-            array(
-                'name' => 'Вовчанська територіальна громада',
                 'alert' => false,
                 'changed' => '1970-01-01 03:00:00',
                 'reason' => '',
