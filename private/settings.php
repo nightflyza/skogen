@@ -4,7 +4,7 @@ $pollTimeout=5;
 $backlogSize=100;
 $channel='air_alert_ua';
 $timezone='Europe/Kiev';
-$mapLabel='Oo';
+$mapLabel='';
 $debug=true;
 $paranoidDebug=false;
 
