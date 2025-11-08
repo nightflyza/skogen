@@ -1,0 +1,220 @@
+<?php
+
+namespace SVG\Tests\Nodes\Shapes;
+
+use PHPUnit\Framework\TestCase;
+use SVG\Nodes\Shapes\SVGPolygonalShape;
+
+/**
+ * @SuppressWarnings(PHPMD)
+ */
+class SVGPolygonalShapeSubclass extends SVGPolygonalShape
+{
+    public const TAG_NAME = 'test_subclass';
+
+    public function __construct(?array $points = null)
+    {
+        parent::__construct($points);
+    }
+
+    public function rasterize(\SVG\Rasterization\SVGRasterizer $rasterizer): void
+    {
+    }
+}
+
+/**
+ * @coversDefaultClass \SVG\Nodes\Shapes\SVGPolygonalShape
+ * @covers ::<!public>
+ *
+ * @SuppressWarnings(PHPMD)
+ */
+class SVGPolygonalShapeTest extends TestCase
+{
+    /**
+     * @covers ::__construct
+     */
+    public function test__construct(): void
+    {
+        // should not set attribute if nothing is provided
+        $obj = new SVGPolygonalShapeSubclass();
+        $this->assertNull($obj->getAttribute('points'));
+
+        // should set attribute to '' if empty array is provided
+        $obj = new SVGPolygonalShapeSubclass([]);
+        $this->assertSame('', $obj->getAttribute('points'));
+
+        // should set provided points
+        $points = [
+            [42.5, 42.5],
+            [37, 37],
+        ];
+        $obj = new SVGPolygonalShapeSubclass($points);
+        $this->assertSame('42.5,42.5 37,37', $obj->getAttribute('points'));
+
+        // should stop when invalid point is encountered
+        $obj = new SVGPolygonalShapeSubclass([
+            [1, 2],
+            [3],
+            [4, 5],
+        ]);
+        $this->assertSame('1,2', $obj->getAttribute('points'));
+    }
+
+    /**
+     * @covers ::addPoint
+     */
+    public function testAddPoint(): void
+    {
+        $obj = new SVGPolygonalShapeSubclass();
+
+        // should support 2 floats
+        $obj->addPoint(42.5, 43.5);
+        $this->assertSame('42.5,43.5', $obj->getAttribute('points'));
+
+        // should support an array
+        $obj->addPoint([37, 38]);
+        $this->assertSame('42.5,43.5 37,38', $obj->getAttribute('points'));
+
+        // should return same instance
+        $this->assertSame($obj, $obj->addPoint(42, 37));
+
+        // should notice attribute reset
+        $obj->setAttribute('points', null);
+        $obj->addPoint(10, 11);
+        $this->assertSame('10,11', $obj->getAttribute('points'));
+
+        // should not add whitespace to empty attribute
+        $obj->setAttribute('points', '');
+        $obj->addPoint(12, 13);
+        $this->assertSame('12,13', $obj->getAttribute('points'));
+    }
+
+    /**
+     * @covers ::removePoint
+     */
+    public function testRemovePoint(): void
+    {
+        $obj = new SVGPolygonalShapeSubclass([
+            [42.5, 43.5],
+            [37, 38],
+        ]);
+
+        // should remove points by index
+        $obj->removePoint(0);
+        $this->assertSame('37,38', $obj->getAttribute('points'));
+        $this->assertEquals([
+            [37, 38],
+        ], $obj->getPoints());
+
+        // should return same instance
+        $this->assertSame($obj, $obj->removePoint(0));
+
+        // should allow clearing points completely
+        $this->assertSame('', $obj->getAttribute('points'));
+        $this->assertSame([], $obj->getPoints());
+
+        // should allow removing from middle
+        $obj->setAttribute('points', '1,2 3,4 5,6');
+        $obj->removePoint(1);
+        $this->assertSame('1,2 5,6', $obj->getAttribute('points'));
+    }
+
+    /**
+     * @covers ::countPoints
+     */
+    public function testCountPoints(): void
+    {
+        $obj = new SVGPolygonalShapeSubclass([
+            [42.5, 43.5],
+            [37, 38],
+        ]);
+
+        // should return number of points
+        $this->assertSame(2, $obj->countPoints());
+
+        // should return 0 for missing attribute
+        $obj->setAttribute('points', null);
+        $this->assertSame(0, $obj->countPoints());
+
+        // should return 0 for empty attribute
+        $obj->setAttribute('points', '');
+        $this->assertSame(0, $obj->countPoints());
+
+        // should use attribute as source
+        $obj->setAttribute('points', '1,2 3,4 5,6');
+        $this->assertSame(3, $obj->countPoints());
+
+        // should support a variety of separators
+        $obj->setAttribute('points', '1,-2 3 -4  ,  5   -6  ,7,-8');
+        $this->assertSame(4, $obj->countPoints());
+
+        // can deal with an odd number of coordinates
+        $obj->setAttribute('points', '1 2 3 4 5 6 7');
+        $this->assertSame(3, $obj->countPoints());
+    }
+
+    /**
+     * @covers ::getPoints
+     */
+    public function testGetPoints(): void
+    {
+        $obj = new SVGPolygonalShapeSubclass();
+
+        // should return empty array for missing attribute
+        $obj->setAttribute('points', null);
+        $this->assertSame([], $obj->getPoints());
+
+        // should return empty array for empty attribute
+        $obj->setAttribute('points', '');
+        $this->assertSame([], $obj->getPoints());
+
+        // should parse attribute
+        $obj->setAttribute('points', '42.5 43.5 37 38 -5 3');
+        $this->assertEquals([
+            [42.5, 43.5],
+            [37, 38],
+            [-5, 3]
+        ], $obj->getPoints());
+
+        // should support comma delimiter
+        $obj->setAttribute('points', '42.5 43.5 37,38,-5,3');
+        $this->assertEquals([
+            [42.5, 43.5],
+            [37, 38],
+            [-5, 3]
+        ], $obj->getPoints());
+    }
+
+    /**
+     * @covers ::getPoint
+     */
+    public function testGetPoint(): void
+    {
+        $obj = new SVGPolygonalShapeSubclass([
+            [42.5, 43.5],
+            [37, 38],
+        ]);
+
+        // should return point at index
+        $this->assertEquals([42.5, 43.5], $obj->getPoint(0));
+        $this->assertEquals([37, 38], $obj->getPoint(1));
+    }
+
+    /**
+     * @covers ::setPoint
+     */
+    public function testSetPoint(): void
+    {
+        $obj = new SVGPolygonalShapeSubclass([
+            [42.5, 43.5],
+            [37, 38],
+        ]);
+
+        // should replace the point at the given index
+        $obj->setPoint(1, [100, 200]);
+        $this->assertSame('42.5,43.5 100,200', $obj->getAttribute('points'));
+
+        // should return same instance
+        $this->assertSame($obj, $obj->setPoint(1, [300, 400]));
+    }
+}
