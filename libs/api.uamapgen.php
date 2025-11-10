@@ -102,7 +102,7 @@ class UaMapGen {
     public function generatePng($states, $title = '', $transparent = true) {
         $svgClass = '\SVG\SVG';
         if (!class_exists($svgClass)) {
-            throw new RuntimeException('php-svg library not found. Include autoloader before using generatePng.');
+            throw new RuntimeException('php-svg library not found.');
         }
         
         $svgClass::addFont(__DIR__ . '/../assets/Bebas_Neue_Cyrillic.ttf');
