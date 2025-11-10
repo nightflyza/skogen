@@ -19,7 +19,7 @@ $parser->setMaxRetries($maxRetries);
 $parser->setRetryDelaySeconds($retryDelay);
 $parserTimezone = $parser->getTimezoneName();
 
-print('[init] Channel: ' . $backlogSize . PHP_EOL);
+print('[init] Channel: ' . $channel . PHP_EOL);
 print('[init] Max retries: ' . $maxRetries . PHP_EOL);
 print('[init] Retry delay: ' . $retryDelay . PHP_EOL);
 print('[init] Parser timezone: ' . $parserTimezone . PHP_EOL);

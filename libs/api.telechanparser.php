@@ -215,6 +215,8 @@ class TeleChanParser {
      */
     public function setChannel($channel) {
         if ($channel !== '') {
+            $channel=str_replace('@', '', $channel);
+            $channel=trim($channel);
             $this->channel = $channel;
         }
     }

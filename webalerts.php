@@ -21,10 +21,7 @@
         body {
             margin: 0;
             padding: 40px clamp(20px, 5vw, 80px);
-            font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-            background: radial-gradient(120% 80% at 50% 0%, rgba(56, 189, 248, 0.12), transparent),
-                        radial-gradient(80% 120% at 0% 100%, rgba(236, 72, 153, 0.12), transparent),
-                        var(--bg);
+            background: var(--bg);
             color: var(--text);
         }
 
@@ -43,9 +40,9 @@
 
         .states {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
             gap: clamp(16px, 3vw, 32px);
-            max-width: 1200px;
+            width: min(100%, 960px);
             margin: 0 auto;
         }
 
@@ -55,14 +52,8 @@
             border-radius: 20px;
             background: var(--card);
             border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-            backdrop-filter: blur(12px);
-            transition: transform 220ms ease, box-shadow 220ms ease;
-        }
-
-        .state:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.35);
+            box-shadow: none;
+            backdrop-filter: none;
         }
 
         .state h2 {
@@ -119,7 +110,7 @@
             border: 1px solid rgba(148, 163, 184, 0.18);
             font-size: 0.95rem;
             color: var(--text);
-            backdrop-filter: blur(8px);
+            backdrop-filter: none;
         }
 
         .badge-icon {
@@ -137,13 +128,29 @@
             opacity: 0.6;
         }
 
-        @media (max-width: 600px) {
+        @media (min-width: 1200px) {
+            .states {
+                width: min(100%, 1100px);
+            }
+        }
+
+        @media (max-width: 768px) {
             body {
                 padding: 30px 16px;
             }
 
             header {
                 text-align: left;
+            }
+
+            .states {
+                width: 100%;
+                grid-template-columns: 1fr;
+            }
+
+            .state {
+                padding: 20px;
+                width: 100%;
             }
         }
     </style>
@@ -154,76 +161,96 @@
     </header>
 
     <?php
+    function renderBadges(array $items): string
+    {
+        $badges = array();
+
+        foreach ($items as $item) {
+            if (!is_array($item) or !isset($item['name'])) {
+                continue;
+            }
+
+            $name = htmlspecialchars($item['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $changed = isset($item['changed'])
+                ? htmlspecialchars($item['changed'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                : '1970-01-01 03:00:00';
+            $icon = !empty($item['alert']) ? '🔴' : '🟢';
+
+            $badges[] = '<div class="badge"><span class="badge-icon">' . $icon . '</span>' . $name . '<small>' . $changed . '</small></div>';
+        }
+
+        if (empty($badges)) {
+            return '';
+        }
+
+        return '<div class="alerts">' . implode('', $badges) . '</div>';
+    }
+
+    function renderState(array $state): string
+    {
+        if (!isset($state['name'])) {
+            return '';
+        }
+
+        $name = htmlspecialchars($state['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $changed = isset($state['changed'])
+            ? htmlspecialchars($state['changed'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+            : '1970-01-01 03:00:00';
+        $alert = !empty($state['alert']);
+        $emoji = $alert ? '🔴' : '🟢';
+
+        $markup = '<div class="state">';
+        $markup .= '<h2>' . $emoji . ' ' . $name . '</h2>';
+        $markup .= '<div class="changed"><span>📅</span><span>' . $changed . '</span></div>';
+
+        if (isset($state['districts']) and is_array($state['districts'])) {
+            $districtMarkup = renderBadges($state['districts']);
+            if ($districtMarkup !== '') {
+                $markup .= $districtMarkup;
+            }
+        }
+
+        if (isset($state['community']) and is_array($state['community'])) {
+            $communityMarkup = renderBadges($state['community']);
+            if ($communityMarkup !== '') {
+                $markup .= $communityMarkup;
+            }
+        }
+
+        $markup .= '</div>';
+
+        return $markup;
+    }
+
     $dataSource = __DIR__ . '/data/morkstates.json';
     if (file_exists($dataSource))  {
         $statesData = file_get_contents($dataSource);
         $morkStates = json_decode($statesData, true);
         if (!empty($morkStates) and is_array($morkStates)) {
-            echo '<div class="states">';
-
+            $statesMarkup = array();
             foreach ($morkStates as $state) {
                 if (!is_array($state)) {
                     continue;
                 }
 
-                $name = isset($state['name']) ? htmlspecialchars($state['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : 'unknown';
-                $changed = isset($state['changed']) ? htmlspecialchars($state['changed'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : '1970-01-01 03:00:00';
-                $alert = !empty($state['alert']);
-                $emoji = $alert ? '🔴' : '🟢';
-
-                echo '<div class="state">';
-                echo '<h2>' . $emoji . ' ' . $name . '</h2>';
-                echo '<div class="changed"><span>📅</span><span>' . $changed . '</span></div>';
-
-                $districtBadges = array();
-                if (isset($state['districts']) and is_array($state['districts'])) {
-                    foreach ($state['districts'] as $district) {
-                        $districtBadges[] = array(
-                            'name' => htmlspecialchars($district['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
-                            'changed' => isset($district['changed']) ? htmlspecialchars($district['changed'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : '1970-01-01 03:00:00',
-                            'alert' => !empty($district['alert']),
-                        );
-                    }
+                $stateMarkup = renderState($state);
+                if ($stateMarkup === '') {
+                    continue;
                 }
 
-                if (!empty($districtBadges)) {
-                    echo '<div class="alerts">';
-                    foreach ($districtBadges as $district) {
-                        $icon = !empty($district['alert']) ? '🔴' : '🟢';
-                        echo '<div class="badge"><span class="badge-icon">' . $icon . '</span>' . $district['name'] . '<small>' . $district['changed'] . '</small></div>';
-                    }
-                    echo '</div>';
-                }
-
-                $communityBadges = array();
-                if (isset($state['community']) and is_array($state['community'])) {
-                    foreach ($state['community'] as $community) {
-                        $communityBadges[] = array(
-                            'name' => htmlspecialchars($community['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
-                            'changed' => isset($community['changed']) ? htmlspecialchars($community['changed'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : '1970-01-01 03:00:00',
-                            'alert' => !empty($community['alert']),
-                        );
-                    }
-                }
-
-                if (!empty($communityBadges)) {
-                    echo '<div class="alerts">';
-                    foreach ($communityBadges as $community) {
-                        $icon = !empty($community['alert']) ? '🔴' : '🟢';
-                        echo '<div class="badge"><span class="badge-icon">' . $icon . '</span>' . $community['name'] . '<small>' . $community['changed'] . '</small></div>';
-                    }
-                    echo '</div>';
-                }
-
-                echo '</div>';
+                $statesMarkup[] = $stateMarkup;
             }
 
-            echo '</div>';
+            if (!empty($statesMarkup)) {
+                print '<div class="states">' . implode('', $statesMarkup) . '</div>';
+            } else {
+                print '<p>States data source is empty or invalid.</p>';
+            }
         } else {
-            echo '<p>States file is empty or invalid.</p>';
+            print '<p>States data source is empty or invalid.</p>';
         }
     } else {
-        echo '<p>No data source found.</p>';
+        print '<p>No data source found.</p>';
     }
     ?>
 </body>
