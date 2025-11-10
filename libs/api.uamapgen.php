@@ -54,12 +54,11 @@ class UaMapGen {
      *
      * @param array $states
      * @param string $title
-     * @param bool $transparent
      *
      * @return array
      */
-    public function generate($states, $title = '', $transparent = true) {
-        $svg = $this->generateSvg($states, $title, $transparent);
+    public function generate($states, $title = '') {
+        $svg = $this->generateSvg($states, $title);
 
         $result = array(
             'contentType' => 'image/svg+xml',
@@ -74,47 +73,40 @@ class UaMapGen {
      *
      * @param array $states
      * @param string $title
-     * @param bool $transparent
      *
      * @return string
      */
-    public function generateSvg($states, $title = '', $transparent = true) {
+    public function generateSvg($states, $title = '') {
         $template = $this->loadTemplate();
         $alerts = $this->normalizeStates($states);
         $svg = $this->replacePlaceholders($template, $alerts, $title);
-
-        if (!$transparent) {
-            $svg = $this->injectBackground($svg);
-        }
 
         return ($svg);
     }
 
     /**
-     * Generates PNG payload for the map.
+     * Generates raster payload for the map.
      *
      * @param array $states
      * @param string $title
-     * @param bool $transparent
+     * @param string $format
      *
      * @return array
      */
-    public function generatePng($states, $title = '', $transparent = true) {
-        $svgClass = '\SVG\SVG';
-        if (!class_exists($svgClass)) {
-            throw new RuntimeException('php-svg library not found.');
-        }
-        
-        $svgClass::addFont(__DIR__ . '/../assets/Bebas_Neue_Cyrillic.ttf');
-      //  $svgClass::addFont(__DIR__ . '/../assets/OpenSans-Regular.ttf');
-      //  $svgClass::addFont(__DIR__ . '/../assets/DejaVuSansMono-Bold.ttf');
+    public function rasterize($states, $title = '', $format = 'png') {
+        $normalized = $this->normalizeFormat($format);
+        $supported = array('png', 'jpeg', 'gif', 'webp');
 
-        $svgContent = $this->generateSvg($states, $title, $transparent);
-        $png = $this->convertSvgToPng($svgContent, $transparent);
+        if (!in_array($normalized, $supported, true)) {
+            throw new InvalidArgumentException('Unsupported raster format: ' . $format);
+        }
+
+        $svgContent = $this->generateSvg($states, $title);
+        $bytes = $this->convertSvgToRaster($svgContent, $normalized);
 
         $result = array(
-            'contentType' => 'image/png',
-            'bytes' => $png,
+            'contentType' => 'image/' . $this->contentTypeSuffix($normalized),
+            'bytes' => $bytes,
         );
 
         return ($result);
@@ -242,41 +234,20 @@ class UaMapGen {
     }
 
     /**
-     * Adds background fill to SVG.
-     *
-     * @param string $svg
-     *
-     * @return string
-     */
-    protected function injectBackground($svg) {
-        $background = '<rect width="1000" height="670" fill="#ffffff" data-uamapgen="background"></rect>';
-
-        if (preg_match('/<svg\b[^>]*>/i', $svg, $match)) {
-            $tag = $match[0];
-            $replacement = $tag . $background;
-
-            $result = preg_replace('/<svg\b[^>]*>/i', $replacement, $svg, 1);
-            if ($result !== null) {
-                return ($result);
-            }
-        }
-
-        return ($background . $svg);
-    }
-
-    /**
-     * Converts SVG to PNG bytes.
+     * Converts SVG to raster bytes.
      *
      * @param string $svgContent
-     * @param bool $transparent
+     * @param string $format
      *
      * @return string
      */
-    protected function convertSvgToPng($svgContent, $transparent) {
+    protected function convertSvgToRaster($svgContent, $format) {
         $svgClass = '\SVG\SVG';
         if (!class_exists($svgClass)) {
-            throw new RuntimeException('php-svg library not found. Include autoloader before using generatePng.');
+            throw new RuntimeException('php-svg library not found. Include autoloader before converting to raster.');
         }
+
+        $svgClass::addFont(__DIR__ . '/../assets/Bebas_Neue_Cyrillic.ttf');
 
         $image = call_user_func(array($svgClass, 'fromString'), $svgContent);
         $document = $image->getDocument();
@@ -285,13 +256,72 @@ class UaMapGen {
         $height = $this->parsePixelSize($document->getHeight(), 670);
 
         $gd = $image->toRasterImage($width, $height);
-        imagealphablending($gd, false);
-        imagesavealpha($gd, true);
+        $isGdObject = class_exists('\GdImage') ? ($gd instanceof \GdImage) : false;
+
+        if (!is_resource($gd) and !$isGdObject) {
+            throw new RuntimeException('Unable to render raster image from SVG.');
+        }
+
+        if ($format === 'png' or $format === 'webp') {
+            imagealphablending($gd, false);
+            imagesavealpha($gd, true);
+        }
+
+        if ($format === 'gif') {
+            $backgroundColor = imagecolorat($gd, 0, 0);
+            $backgroundAlpha = ($backgroundColor & 0x7F000000) >> 24;
+            imagetruecolortopalette($gd, true, 256);
+            $transparentIndex = imagecolorclosestalpha(
+                $gd,
+                ($backgroundColor >> 16) & 0xFF,
+                ($backgroundColor >> 8) & 0xFF,
+                $backgroundColor & 0xFF,
+                $backgroundAlpha
+            );
+            if ($backgroundAlpha === 127 and $transparentIndex !== -1) {
+                imagecolortransparent($gd, $transparentIndex);
+            }
+        }
+
+        if ($format === 'jpeg') {
+            imagealphablending($gd, true);
+            imagesavealpha($gd, false);
+
+            $opaque = imagecreatetruecolor($width, $height);
+            $background = imagecolorallocate($opaque, 255, 255, 255);
+            imagefilledrectangle($opaque, 0, 0, $width, $height, $background);
+            imagecopy($opaque, $gd, 0, 0, 0, 0, $width, $height);
+            imagedestroy($gd);
+            $gd = $opaque;
+        }
+
+        if ($format === 'webp' and !function_exists('imagewebp')) {
+            imagedestroy($gd);
+            throw new RuntimeException('WebP support is not enabled in GD.');
+        }
+
         ob_start();
-        imagepng($gd, null, 6);
+        $success = false;
+        if ($format === 'png') {
+            $success = imagepng($gd, null, 6);
+        } elseif ($format === 'jpeg') {
+            $success = imagejpeg($gd, null, 80);
+        } elseif ($format === 'gif') {
+            $success = imagegif($gd);
+        } elseif ($format === 'webp') {
+            $success = imagewebp($gd, null, 90);
+        }
+
+        if ($success === false) {
+            ob_end_clean();
+            imagedestroy($gd);
+            throw new RuntimeException('Failed to encode ' . $format . ' image.');
+        }
+
+        $binary = (string) ob_get_clean();
         imagedestroy($gd);
 
-        return (string) ob_get_clean();
+        return ($binary);
     }
 
     /**
@@ -316,6 +346,38 @@ class UaMapGen {
         }
 
         return ($default);
+    }
+
+    /**
+     * Normalizes raster format name.
+     *
+     * @param string $format
+     *
+     * @return string
+     */
+    protected function normalizeFormat($format) {
+        $lower = strtolower((string) $format);
+
+        if ($lower === 'jpg') {
+            return ('jpeg');
+        }
+
+        return ($lower);
+    }
+
+    /**
+     * Maps normalized format to content type suffix.
+     *
+     * @param string $format
+     *
+     * @return string
+     */
+    protected function contentTypeSuffix($format) {
+        if ($format === 'jpeg') {
+            return ('jpeg');
+        }
+
+        return ($format);
     }
  
 }
