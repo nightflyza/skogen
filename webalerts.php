@@ -242,15 +242,15 @@
             }
 
             if (!empty($statesMarkup)) {
-                print '<div class="states">' . implode('', $statesMarkup) . '</div>';
+                print('<div class="states">' . implode('', $statesMarkup) . '</div>');
             } else {
-                print '<p>States data source is empty or invalid.</p>';
+                print('<p>States data source is empty or invalid.</p>');
             }
         } else {
-            print '<p>States data source is empty or invalid.</p>';
+            print('<p>States data source is empty or invalid.</p>');
         }
     } else {
-        print '<p>No data source found.</p>';
+        print('<p>No data source found.</p>');
     }
     ?>
 </body>
