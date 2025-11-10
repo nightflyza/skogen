@@ -244,7 +244,7 @@ class UaMapGen {
     protected function convertSvgToRaster($svgContent, $format) {
         $svgClass = '\SVG\SVG';
         if (!class_exists($svgClass)) {
-            throw new RuntimeException('php-svg library not found. Include autoloader before converting to raster.');
+            throw new RuntimeException('php-svg library not found.');
         }
 
         $svgClass::addFont(__DIR__ . '/../assets/Bebas_Neue_Cyrillic.ttf');

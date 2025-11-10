@@ -25,7 +25,7 @@ This permanently removes any uncommitted work, so only use it when you are certa
 # Endpoints
 
 * API endpoint: api.php
-* MAP endpoint: map.php supports optional GET parameter ?svg to return SVG instead of default PNG image. Also gif, png.jpg and webp output formats supported.
+* MAP endpoint: map.php supports optional GET parameter ?svg to return SVG instead of default PNG image. Also gif, png,jpg and webp output formats supported. You can place custom map title using ?customtitle=sometext optional parameter.
 * Web alerts monitor: webalerts.php
 
 # Actual states, districts and communities

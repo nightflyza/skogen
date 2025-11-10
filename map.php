@@ -14,6 +14,11 @@ if ($mapLabelAppendTimeStamp) {
     $mapLabel .= ' ' . date('Y-m-d H:i');
 }
 
+//custom title overrides default map label
+if (ubRouting::checkGet('customtitle')) {
+   $mapLabel = ubRouting::get('customtitle','safe');
+}
+
 $supportedFormats = array('svg', 'webp', 'png', 'jpeg', 'jpg', 'gif');
 $defaultFormat = 'png';
 $requestedFormat = $defaultFormat;
