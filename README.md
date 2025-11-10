@@ -10,6 +10,18 @@ cd skogen
 chmod -R 777 ./*
 php private/skogen.php
 ```
+
+# Updating to current
+To discard all local changes and replace them with the latest version from the original repository:
+```
+cd skogen
+git fetch origin
+git reset --hard origin/main
+git clean -fd
+```
+This permanently removes any uncommitted work, so only use it when you are certain nothing needs to be preserved.
+
+
 # Endpoints
 
 * API endpoint: api.php
