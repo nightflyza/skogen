@@ -10,10 +10,11 @@ cd skogen
 chmod -R 777 ./*
 php private/skogen.php
 ```
+# Endpoints
 
-API endpoint: api.php
-MAP endpoint: map.php supports optional GET parameter ?svg to return SVG instead of default PNG image
-Web alerts monitor: webalerts.php
+* API endpoint: api.php
+* MAP endpoint: map.php supports optional GET parameter ?svg to return SVG instead of default PNG image
+* Web alerts monitor: webalerts.php
 
 # Actual states, districts and communities
 

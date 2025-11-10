@@ -43,7 +43,7 @@ class UaMapGen {
      * @return void
      */
     public function __construct($templatePath = null, $alertColor = '#dd5522', $defaultColor = '#77aa55', $titleColor = '#000000') {
-        $this->templatePath = $templatePath !== null ? $templatePath : __DIR__ . '/../assets/uamap.svg';
+        $this->templatePath = $templatePath !== null ? $templatePath : __DIR__ . '/../assets/uamap.tpl';
         $this->alertColor = $alertColor;
         $this->defaultColor = $defaultColor;
         $this->titleColor = $titleColor;
@@ -104,6 +104,10 @@ class UaMapGen {
         if (!class_exists($svgClass)) {
             throw new RuntimeException('php-svg library not found. Include autoloader before using generatePng.');
         }
+        
+        $svgClass::addFont(__DIR__ . '/../assets/Bebas_Neue_Cyrillic.ttf');
+      //  $svgClass::addFont(__DIR__ . '/../assets/OpenSans-Regular.ttf');
+      //  $svgClass::addFont(__DIR__ . '/../assets/DejaVuSansMono-Bold.ttf');
 
         $svgContent = $this->generateSvg($states, $title, $transparent);
         $png = $this->convertSvgToPng($svgContent, $transparent);
@@ -313,15 +317,7 @@ class UaMapGen {
 
         return ($default);
     }
-
-    /**
-     * Parses pixel size value from attribute.
-     *
-     * @param mixed $value
-     * @param int $default
-     *
-     * @return int
-     */
+ 
 }
 
 

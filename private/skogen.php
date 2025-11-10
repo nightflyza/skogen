@@ -15,6 +15,15 @@ $parser->setDebug($debug);
 $parser->setChannel($channel);
 $parser->setTimezoneName($timezone);
 $parser->setBacklogSize($backlogSize);
+$parser->setMaxRetries($maxRetries);
+$parser->setRetryDelaySeconds($retryDelay);
+$parserTimezone = $parser->getTimezoneName();
+
+print('[init] Channel: ' . $backlogSize . PHP_EOL);
+print('[init] Max retries: ' . $maxRetries . PHP_EOL);
+print('[init] Retry delay: ' . $retryDelay . PHP_EOL);
+print('[init] Parser timezone: ' . $parserTimezone . PHP_EOL);
+print('==================================');
 
 //fetch backlog
 $messages = $parser->fetchMessages();
@@ -30,7 +39,7 @@ if (empty($messages)) {
         $updater->parseMessage($message);
     }
 
-        print('[stats] Backlog loaded. Messages: ' . sizeof($messages) . ' Last message ID: ' . $parser->getLastMessageId() . PHP_EOL);
+    print('[stats] Backlog loaded. Messages: ' . sizeof($messages) . ' Last message ID: ' . $parser->getLastMessageId() . PHP_EOL);
 }
 
 

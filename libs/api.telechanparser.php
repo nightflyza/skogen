@@ -87,7 +87,7 @@ class TeleChanParser {
      * @return void
      */
     public function __construct() {
-    
+        $this->timezone = $this->createTimezone($this->timezoneName);
     }
 
     /**
@@ -98,10 +98,54 @@ class TeleChanParser {
      * @return DateTimeZone
      */
     protected function createTimezone($name) {
-        $result = timezone_open($name);
-        if ($result === false) {
-            $this->logError('Invalid timezone "' . $name . '". Falling back to UTC.');
-            $result = new DateTimeZone('UTC');
+        $candidates = $this->timezoneCandidates($name);
+        static $availableTimezones = null;
+        if ($availableTimezones === null) {
+            $availableTimezones = array();
+            $identifiers = timezone_identifiers_list();
+            foreach ($identifiers as $identifier) {
+                $availableTimezones[$identifier] = true;
+            }
+        }
+
+        foreach ($candidates as $candidate) {
+            if (!isset($availableTimezones[$candidate])) {
+                continue;
+            }
+
+            try {
+                $result = new DateTimeZone($candidate);
+                $this->timezoneName = $candidate;
+
+                return ($result);
+            } catch (Exception $exception) {
+                continue;
+            }
+        }
+
+        $this->logError('Invalid timezone "' . $name . '". Falling back to UTC.');
+        $this->timezoneName = 'UTC';
+
+        return (new DateTimeZone('UTC'));
+    }
+
+    /**
+     * Returns candidate timezone names.
+     *
+     * @param string $name
+     *
+     * @return array
+     */
+    protected function timezoneCandidates($name) {
+        $result = array();
+        if ($name !== '') {
+            $result[] = $name;
+            $normalized = mb_strtolower($name, 'UTF-8');
+            if ($normalized === 'europe/kiev') {
+                $result[] = 'Europe/Kyiv';
+            } elseif ($normalized === 'europe/kyiv') {
+                $result[] = 'Europe/Kiev';
+            }
         }
 
         return ($result);
@@ -253,16 +297,18 @@ class TeleChanParser {
      */
     public function setTimezoneName($timezoneName) {
         if ($timezoneName !== '') {
-            $timezone = timezone_open($timezoneName);
-            if ($timezone === false) {
-                $this->logError('Invalid timezone "' . $timezoneName . '". Keeping previous timezone.');
-                return;
-            }
-
-            $this->timezoneName = $timezoneName;
-            $this->timezone = $timezone;
-            $this->createTimezone($timezoneName);
+            $this->timezone = $this->createTimezone($timezoneName);
         }
+    }
+
+    /**
+     * Returns the configured timezone name.
+     *
+     * @return string
+     */
+    public function getTimezoneName() {
+        $result = $this->timezoneName;
+        return ($this->timezoneName);
     }
 
     /**

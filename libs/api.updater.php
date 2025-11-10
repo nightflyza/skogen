@@ -13,6 +13,20 @@ class StatesUpdater {
     protected $previousStatesFile = __DIR__ . '/../data/morkstates.json';
 
     /**
+     * Contains the filename of the last states update.
+     *
+     * @var string
+     */
+    protected $lastUpdateFile=__DIR__ . '/../data/lastupdate.dat';
+
+    /**
+     * Contains the datetime of the last states update.
+     *
+     * @var string
+     */
+    protected $lastUpdateTime='';
+
+    /**
      * Collection of normalized state entries.
      *
      * @var array
@@ -206,6 +220,10 @@ class StatesUpdater {
         if (file_put_contents($this->previousStatesFile, $encoded) === false) {
             throw new RuntimeException('Unable to write states storage.');
         }
+        //update the last update time
+        $this->lastUpdateTime = $this->currentTime();
+        //save the last update time to the file
+        file_put_contents($this->lastUpdateFile, $this->lastUpdateTime);
     }
 
     /**
@@ -749,7 +767,7 @@ class StatesUpdater {
      * @return void
      */
     protected function logStateSummary($context) {
-        print('[stats] ' . $context . ':' . PHP_EOL);
+        print('[init] ' . $context . ':' . PHP_EOL);
         print('==================================' . PHP_EOL);
         foreach ($this->actualStates as $state) {
             $name = isset($state['name']) ? $state['name'] : 'unknown';

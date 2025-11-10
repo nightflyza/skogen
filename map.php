@@ -10,7 +10,9 @@ $mapGen = new UaMapGen();
 $statesData = file_get_contents(__DIR__ . '/data/morkstates.json');
 $morkStates = json_decode($statesData, true);
 
-
+if ($mapLabelAppendTimeStamp) {
+    $mapLabel .= ' ' . date('Y-m-d H:i');
+}
 
  //here svg map
  if (ubRouting::checkGet('svg',false)) {

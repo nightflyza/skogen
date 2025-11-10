@@ -1,10 +1,15 @@
 <?php
 
 $pollTimeout=5;
+$maxRetries=3;
+$retryDelay=5;
+
 $backlogSize=200;
 $channel='air_alert_ua';
-$timezone='Europe/Kiev';
+$timezone='Europe/Kyiv';
 $mapLabel='';
+$mapLabelAppendTimeStamp=false;
+
 $debug=false;
 $paranoidDebug=false;
 

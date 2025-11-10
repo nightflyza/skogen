@@ -7,6 +7,16 @@ if (file_exists($dataSource)) {
     $statesData = file_get_contents($dataSource);
     $morkStates = json_decode($statesData, true);
     if (!empty($morkStates) and is_array($morkStates)) {
+        //load the last update time
+        $lastUpdateTime = @file_get_contents(__DIR__ . '/data/lastupdate.dat');
+
+        $result['info'] = array();
+        $result['info'] = array(
+            'version' => 1,
+            'last_update' => $lastUpdateTime,
+        );
+
+        $result['states'] = array();
         foreach ($morkStates as $state) {
             $stateDistricts=array();
             $stateCommunities=array();
@@ -29,7 +39,7 @@ if (file_exists($dataSource)) {
                 }
             }
 
-            $result[$state['id']] = array(
+            $result['states'][$state['id']] = array(
                 'name' => $state['name'],
                 'alert' => $state['alert'],
                 'changed' => $state['changed'],
