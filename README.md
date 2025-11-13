@@ -9,12 +9,6 @@
 Simple service that implements Air Raid Alerts API and performs air raid map generation.
 Yes, it just PHP port of [and3rson/raid](https://github.com/and3rson/raid) original project with support of states districts and local communities.
 
-<br>
-<a href="https://vshymanskyy.github.io/StandWithUkraine">
-	<img src="https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg">
-</a>
-<br>
-
 # Running locally
 ```
 git clone https://github.com/nightflyza/skogen.git
